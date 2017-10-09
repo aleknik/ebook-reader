@@ -1,0 +1,118 @@
+﻿<Window x:Class="EBookReader.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:EBookReader.CustomControls"
+        xmlns:cmd="clr-namespace:EBookReader.Commands"
+        mc:Ignorable="d"
+        Title="Ebook Reader" Height="600" Width="800" SizeChanged="Window_SizeChanged" Closing="Window_Closing"
+        x:Name="Root">
+    <Window.CommandBindings>
+        <CommandBinding Command="cmd:RoutedCommands.FileOpen" CanExecute="FileOpen_CanExecute"
+                        Executed="FileOpen_Executed" />
+        <CommandBinding Command="cmd:RoutedCommands.Mark" CanExecute="Mark_CanExecute"
+                        Executed="Mark_Executed" />
+        <CommandBinding Command="cmd:RoutedCommands.Unmark" CanExecute="UnMark_CanExecute"
+                        Executed="UnMark_Executed" />
+        <CommandBinding Command="cmd:RoutedCommands.NightMode" CanExecute="NightMode_CanExecute"
+                        Executed="NightMode_Executed" />
+        <CommandBinding Command="cmd:RoutedCommands.FullScreen" CanExecute="FullScreen_CanExecute"
+                        Executed="FullScreen_Executed" />
+        <CommandBinding Command="cmd:RoutedCommands.ShowBooks" CanExecute="ShowBooks_CanExecute"
+                        Executed="ShowBooks_Executed" />
+    </Window.CommandBindings>
+
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open" Command="cmd:RoutedCommands.FileOpen" />
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="_Find" Command="Find"
+                          CommandTarget="{Binding ElementName=DocumentReader}" />
+                <MenuItem Header="_Copy" Command="ApplicationCommands.Copy"
+                          CommandTarget="{Binding ElementName=DocumentReader}" />
+                <MenuItem Header="_Mark" Command="cmd:RoutedCommands.Mark" />
+                <MenuItem Header="_Unmark" Command="cmd:RoutedCommands.Unmark" />
+            </MenuItem>
+            <MenuItem Header="_View">
+                <MenuItem Header="_Night Mode" IsCheckable="false" Command="cmd:RoutedCommands.NightMode"
+                          IsChecked="{Binding Path=NightMode}" />
+                <MenuItem Header="_Full Screen Mode" IsCheckable="false" Command="cmd:RoutedCommands.FullScreen"
+                          IsChecked="{Binding Path=FullScreen}" />
+                <MenuItem Header="Show _Bookshelf" IsCheckable="false" Command="cmd:RoutedCommands.ShowBooks"
+                          IsChecked="{Binding Path=BookList}" />
+            </MenuItem>
+        </Menu>
+
+        <ToolBarTray DockPanel.Dock="Top">
+            <ToolBar Band="1" BandIndex="1">
+                <Button x:Name="OpenFileButton" Command="cmd:RoutedCommands.FileOpen"
+                        ToolTip="Open File (Ctrl+O)">
+                    <Image Source="Resources/open-file.png" Height="20" />
+                </Button>
+
+                <Image Source="Resources/margin.png" Height="20" ToolTip="Set Margins"
+                       Margin="15, 0, 0, 0" />
+                <Slider x:Name="MarginSlider" Maximum="{Binding MaxMargin}" Minimum="20"
+                        ValueChanged="MarginSlider_ValueChanged" Width="100" Margin="7, 4, 0, 0"
+                        IsEnabled="{Binding DocumentLoaded}" ToolTip="Set Margins" />
+
+                <Image Source="Resources/pages.png" Height="20" ToolTip="Page Scroller"
+                       Margin="15, 0, 0, 0" />
+                <Slider x:Name="PageSlider" Minimum="1"
+                        Maximum="{Binding ElementName=DocumentReader, Path=PageCount, UpdateSourceTrigger=PropertyChanged}"
+                        Value="{Binding ElementName=DocumentReader, Path=MasterPageNumber, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
+                        Width="100" Margin="7, 4, 0, 0" ValueChanged="PageSlider_ValueChanged"
+                        IsEnabled="{Binding DocumentLoaded}" ToolTip="Page Scroller" />
+
+                <Label Margin="10, 0, 0, 0">Go to page</Label>
+                <TextBox x:Name="PageNumberTextBox" Width="40" KeyUp="PageNumberTextBox_KeyUp"
+                         Text="{Binding ElementName=DocumentReader, Path=MasterPageNumber, UpdateSourceTrigger=PropertyChanged,  Mode=OneWay}"
+                         IsEnabled="{Binding DocumentLoaded}" />
+
+                <Button x:Name="MarkTextButton" Margin="10, 0, 0, 0" Command="cmd:RoutedCommands.Mark"
+                        ToolTip="Mark Selection (Ctrl+M)" ToolTipService.ShowOnDisabled="True">
+                    <Image Source="Resources/marker.png" Height="20" />
+                </Button>
+
+                <Button x:Name="UnmarkTextButton" Margin="5, 0, 0, 0" Command="cmd:RoutedCommands.Unmark"
+                        ToolTip="Unmark Selection (Ctrl+U)" ToolTipService.ShowOnDisabled="True">
+                    <Image Source="Resources/eraser.png" Height="20" />
+                </Button>
+
+                <CheckBox x:Name="NightModeCheckBox" Margin="10, 0, 0, 0" Command="cmd:RoutedCommands.NightMode"
+                          IsChecked="{Binding NightMode}" ToolTip="Toggle Night Mode (F11)">
+                    <Image Source="Resources/night.png" Height="20" />
+                </CheckBox>
+
+                <CheckBox x:Name="FullScreenModeCheckBox" Margin="10, 0, 0, 0" Command="cmd:RoutedCommands.FullScreen"
+                          IsChecked="{Binding FullScreen, Mode=OneWay}" ToolTip="Toggle Full Screen Mode (F12)">
+                    <Image Source="Resources/full-size.png" Height="20" />
+                </CheckBox>
+            </ToolBar>
+        </ToolBarTray>
+        <Grid DockPanel.Dock="Bottom" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="BookListColumn" Width="200"
+                                  MaxWidth="{Binding ElementName=Root, Path=ActualWidth}" />
+                <ColumnDefinition Width="5" />
+                <ColumnDefinition Width="*" MaxWidth="{Binding ElementName=Root, Path=ActualWidth}" />
+            </Grid.ColumnDefinitions>
+            <DockPanel>
+                <Label DockPanel.Dock="Top">Bookshelf</Label>
+                <ListBox x:Name="BookList" VerticalAlignment="Stretch" ItemsSource="{Binding Books}"
+                         MouseDoubleClick="BookList_MouseDoubleClick">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Title}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+            <GridSplitter x:Name="BookListGridSplitter" Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
+            <controls:CustomDocumentReader Grid.Column="2" x:Name="DocumentReader" Background="LightGray" />
+        </Grid>
+    </DockPanel>
+</Window>
